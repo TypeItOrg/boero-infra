@@ -4,6 +4,11 @@ Infraestructura de despliegue compartida para Boero. Este repositorio es la fuen
 
 `boero-ui` y `boero-api` siguen construyendo, validando y publicando sus propias imágenes. Infra permite actualizar cada servicio de forma independiente.
 
+## Documentación
+
+- [`docs/STAGING.md`](docs/STAGING.md): instalación realizada, GitHub Environments, despliegue automático, operación y recuperación.
+- [`docs/PRODUCTION.md`](docs/PRODUCTION.md): topología prevista, bootstrap futuro, workflow manual y checklist obligatorio para el primer release.
+
 ## Staging
 
 La topología actual usa una VPS con Nginx instalado en el host:
@@ -99,6 +104,8 @@ La entrada de `known_hosts` puede obtenerse con `ssh-keyscan <ip>`, pero su fing
 
 ## Producción
 
-`compose.production.yaml` y `.env.production.example` dejan preparada la misma interfaz operativa, pero ningún workflow despliega producción actualmente. Cuando exista el ambiente, debe configurarse mediante un GitHub Environment protegido y aprobación manual.
+`compose.production.yaml` y `.env.production.example` dejan preparada la misma interfaz operativa. Las aplicaciones incluyen workflows manuales que permanecerán bloqueados hasta crear el GitHub Environment `production` con aprobación.
 
 Los puertos por defecto coinciden con staging porque se asume otro host. Si ambos ambientes comparten una VPS, producción necesita puertos loopback y un punto de entrada Nginx diferentes.
+
+No iniciar producción sin completar [`docs/PRODUCTION.md`](docs/PRODUCTION.md). Backups restaurables, TLS y monitoreo siguen pendientes y son bloqueantes para el release.
