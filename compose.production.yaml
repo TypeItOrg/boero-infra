@@ -1,0 +1,139 @@
+name: boero-production
+
+services:
+  ui:
+    container_name: boero-ui-production
+    image: ${UI_IMAGE:-ghcr.io/typeitorg/boero-ui}:${UI_VERSION:?UI_VERSION is required}
+    pull_policy: always
+    init: true
+    ports:
+      - "127.0.0.1:${UI_HOST_PORT:-3000}:3000"
+    environment:
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      BOERO_API_URL: http://api:8080
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    volumes:
+      - ui-next-cache:/app/.next/cache
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    mem_limit: ${UI_MEMORY_LIMIT:-1024m}
+    cpus: ${UI_CPU_LIMIT:-1.0}
+    logging: &logging
+      driver: local
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILES:-5}
+
+  api:
+    container_name: boero-api-production
+    image: ${API_IMAGE:-ghcr.io/typeitorg/boero-api}:${API_VERSION:?API_VERSION is required}
+    pull_policy: always
+    init: true
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-8080}:8080"
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      REFRESH_REPLAY_ENCRYPTION_KEY: ${REFRESH_REPLAY_ENCRYPTION_KEY:?REFRESH_REPLAY_ENCRYPTION_KEY is required}
+      REFRESH_REPLAY_TTL: ${REFRESH_REPLAY_TTL:-5s}
+      SPRING_PROFILES_ACTIVE: prod
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      DB_USER: ${DB_USER:?DB_USER is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      PLATFORM_ADMIN_EMAIL: ${PLATFORM_ADMIN_EMAIL:-}
+      PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:-}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=70.0 -XX:+ExitOnOutOfMemoryError}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    mem_limit: ${API_MEMORY_LIMIT:-1024m}
+    cpus: ${API_CPU_LIMIT:-1.0}
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    container_name: boero-redis-production
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+    mem_limit: ${REDIS_MEMORY_LIMIT:-256m}
+    cpus: ${REDIS_CPU_LIMIT:-0.5}
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  postgres:
+    container_name: boero-postgres-production
+    image: postgres:18-alpine
+    command: ["/bin/sh", "/usr/local/bin/postgres-entrypoint.sh"]
+    environment:
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${DB_USER:?DB_USER is required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    expose:
+      - "5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres-entrypoint.sh:/usr/local/bin/postgres-entrypoint.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:?DB_USER is required} -d ${DB_NAME:?DB_NAME is required}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-1024m}
+    cpus: ${POSTGRES_CPU_LIMIT:-1.0}
+    logging: *logging
+
+volumes:
+  ui-next-cache:
+    name: boero-ui-next-cache-production
+  postgres-data:
+    name: boero-api-postgres-data-prod
+  redis-data:
+    name: boero-api-redis-data-prod
+
+networks:
+  default:
+    name: boero-network-production
