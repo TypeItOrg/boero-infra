@@ -128,10 +128,13 @@ services:
 
 volumes:
   ui-next-cache:
-    name: boero-ui-next-cache-production
+    external: true
+    name: boero-ui-next-cache-prod
   postgres-data:
+    external: true
     name: boero-api-postgres-data-prod
   redis-data:
+    external: true
     name: boero-api-redis-data-prod
 
 networks:

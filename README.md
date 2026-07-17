@@ -71,6 +71,7 @@ make bootstrap ENV=staging
 ```
 
 No agregar `--volumes`: el stack nuevo reutiliza los volúmenes existentes `boero-api-postgres-data-staging`, `boero-api-redis-data-staging` y `boero-ui-next-cache-staging`.
+Compose los declara externos para conservarlos independientemente del ciclo de vida del stack. `make bootstrap` los crea de forma idempotente cuando todavía no existen.
 
 Instalar el sitio Nginx:
 
