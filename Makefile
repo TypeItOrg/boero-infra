@@ -24,15 +24,16 @@ deploy-ui:
 	@test -n "$(VERSION)" || (echo "VERSION is required" >&2; exit 1)
 	flock $(LOCK_FILE) ./scripts/deploy-service.sh $(ENV) ui $(VERSION)
 
-deploy-api:
+deploy-api: prepare
 	@test -n "$(VERSION)" || (echo "VERSION is required" >&2; exit 1)
 	flock $(LOCK_FILE) ./scripts/deploy-service.sh $(ENV) api $(VERSION)
 
 rollback-ui:
 	flock $(LOCK_FILE) ./scripts/rollback-service.sh $(ENV) ui
 
-rollback-api:
+rollback-api: prepare
 	flock $(LOCK_FILE) ./scripts/rollback-service.sh $(ENV) api
+
 
 status:
 	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) ps

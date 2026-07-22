@@ -49,5 +49,11 @@ fi
 grep -qx 'UI_VERSION=sha-aaaa' "$test_dir/.env.staging"
 grep -qx 'API_VERSION=sha-cccc' "$test_dir/.env.staging"
 
+grep -q 'api-logs:/app/logs' "$root_dir/compose.staging.yaml"
+grep -q 'boero-api-logs-staging' "$root_dir/compose.staging.yaml"
+grep -q 'api-logs:/app/logs' "$root_dir/compose.production.yaml"
+grep -q 'boero-api-logs-prod' "$root_dir/compose.production.yaml"
+
 echo "deploy-service tests passed"
+
 
