@@ -67,6 +67,9 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777
+    volumes:
+      - api-logs:/app/logs
+
     cap_drop:
       - ALL
     security_opt:
@@ -136,6 +139,10 @@ volumes:
   redis-data:
     external: true
     name: boero-api-redis-data-staging
+  api-logs:
+    external: true
+    name: boero-api-logs-staging
+
 
 networks:
   default:

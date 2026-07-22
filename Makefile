@@ -13,6 +13,8 @@ prepare:
 	docker volume create boero-ui-next-cache-$(VOLUME_SUFFIX)
 	docker volume create boero-api-postgres-data-$(VOLUME_SUFFIX)
 	docker volume create boero-api-redis-data-$(VOLUME_SUFFIX)
+	docker volume create boero-api-logs-$(VOLUME_SUFFIX)
+
 
 bootstrap: prepare
 	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) pull
