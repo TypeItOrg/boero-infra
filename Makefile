@@ -7,7 +7,7 @@ VOLUME_SUFFIX := $(if $(filter production,$(ENV)),prod,$(ENV))
 
 .DEFAULT_GOAL := status
 
-.PHONY: prepare bootstrap deploy-ui deploy-api rollback-ui rollback-api status logs down test
+.PHONY: prepare bootstrap deploy-ui deploy-api rollback-ui rollback-api status logs logs-api logs-api-file logs-api-request down test
 
 prepare:
 	docker volume create boero-ui-next-cache-$(VOLUME_SUFFIX)
@@ -40,6 +40,16 @@ status:
 
 logs:
 	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) logs -f --tail=200
+
+logs-api:
+	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) logs -f --tail=200 api
+
+logs-api-file:
+	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) exec api tail -f /app/logs/boero-api.log
+
+logs-api-request:
+	@test -n "$(REQUEST_ID)" || (echo "REQUEST_ID is required" >&2; exit 1)
+	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) exec api grep "$(REQUEST_ID)" /app/logs/boero-api.log
 
 down:
 	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) down --remove-orphans
