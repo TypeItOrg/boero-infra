@@ -29,6 +29,8 @@ chmod 600 .env.staging
 
 Completar `.env.staging` sin versionarlo. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`.
 
+Para Gmail, usar `smtp.gmail.com` en el puerto `587` con autenticación y STARTTLS. `MAIL_USERNAME` y `MAIL_FROM` deben ser la cuenta remitente y `MAIL_PASSWORD` debe ser una contraseña de aplicación de Google, no la contraseña normal de la cuenta.
+
 Validar antes de iniciar:
 
 ```bash
@@ -123,4 +125,3 @@ sudo systemctl reload nginx
 ```
 
 Staging continúa por HTTP e IP. No debe usar datos reales; sólo los puertos administrativos necesarios y `80` deben estar expuestos públicamente.
-
