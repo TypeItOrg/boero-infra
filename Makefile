@@ -1,13 +1,15 @@
 COMPOSE := docker compose
 ENV ?= staging
 ENV_FILE := .env.$(ENV)
-COMPOSE_FILE := compose.$(ENV).yaml
+BASE_COMPOSE_FILE := compose.yaml
+ENV_COMPOSE_FILE := compose.$(ENV).yaml
+COMPOSE_ARGS := --env-file $(ENV_FILE) -f $(BASE_COMPOSE_FILE) -f $(ENV_COMPOSE_FILE)
 LOCK_FILE := /tmp/boero-infra-$(ENV).lock
 VOLUME_SUFFIX := $(if $(filter production,$(ENV)),prod,$(ENV))
 
 .DEFAULT_GOAL := status
 
-.PHONY: prepare bootstrap deploy-ui deploy-api rollback-ui rollback-api status logs logs-api logs-api-file logs-api-request down test
+.PHONY: prepare preflight bootstrap deploy-ui deploy-api rollback-ui rollback-api status logs logs-api logs-api-file logs-api-request down test
 
 prepare:
 	docker volume create boero-ui-next-cache-$(VOLUME_SUFFIX)
@@ -16,9 +18,13 @@ prepare:
 	docker volume create boero-api-logs-$(VOLUME_SUFFIX)
 
 
-bootstrap: prepare
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) pull
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) up -d --wait --wait-timeout 180
+preflight:
+	@test -f "$(ENV_FILE)" || (echo "Missing $(ENV_FILE)" >&2; exit 1)
+	$(COMPOSE) $(COMPOSE_ARGS) config --quiet
+
+bootstrap: preflight prepare
+	$(COMPOSE) $(COMPOSE_ARGS) pull
+	$(COMPOSE) $(COMPOSE_ARGS) up -d --wait --wait-timeout 180
 
 deploy-ui:
 	@test -n "$(VERSION)" || (echo "VERSION is required" >&2; exit 1)
@@ -36,23 +42,23 @@ rollback-api: prepare
 
 
 status:
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) ps
+	$(COMPOSE) $(COMPOSE_ARGS) ps
 
 logs:
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) logs -f --tail=200
+	$(COMPOSE) $(COMPOSE_ARGS) logs -f --tail=200
 
 logs-api:
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) logs -f --tail=200 api
+	$(COMPOSE) $(COMPOSE_ARGS) logs -f --tail=200 api
 
 logs-api-file:
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) exec api tail -f /app/logs/boero-api.log
+	$(COMPOSE) $(COMPOSE_ARGS) exec api tail -f /app/logs/boero-api.log
 
 logs-api-request:
 	@test -n "$(REQUEST_ID)" || (echo "REQUEST_ID is required" >&2; exit 1)
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) exec api grep "$(REQUEST_ID)" /app/logs/boero-api.log
+	$(COMPOSE) $(COMPOSE_ARGS) exec api grep "$(REQUEST_ID)" /app/logs/boero-api.log
 
 down:
-	$(COMPOSE) --env-file $(ENV_FILE) -f $(COMPOSE_FILE) down --remove-orphans
+	$(COMPOSE) $(COMPOSE_ARGS) down --remove-orphans
 
 test:
 	./tests/deploy-service.test.sh

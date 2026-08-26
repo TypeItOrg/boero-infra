@@ -22,14 +22,14 @@ Cuando exista la VPS:
 ```bash
 git clone https://github.com/TypeItOrg/boero-infra.git /opt/boero-infra
 cd /opt/boero-infra
-cp .env.production.example .env.production
+cp .env.example .env.production
 chmod 600 .env.production
 ```
 
-Generar secretos nuevos; nunca copiar los de staging. Establecer versiones de UI/API publicadas desde `main` y validar:
+Generar secretos nuevos; nunca copiar los de staging. Configurar el proveedor de correo, usar la URL pública productiva en `PASSWORD_RECOVERY_FRONTEND_URL` y mantener `AUTH_COOKIE_SECURE=true`. Establecer las versiones de UI/API publicadas desde `main` y validar:
 
 ```bash
-docker compose --env-file .env.production -f compose.production.yaml config --quiet
+make preflight ENV=production
 ```
 
 El primer arranque será:
@@ -90,4 +90,3 @@ make rollback-api ENV=production
 ```
 
 El rollback de aplicación no deshace migraciones. Los cambios destructivos de base deben diseñarse en fases compatibles.
-

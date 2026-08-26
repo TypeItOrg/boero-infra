@@ -23,16 +23,16 @@ En la VPS:
 ```bash
 git clone https://github.com/TypeItOrg/boero-infra.git /opt/boero-infra
 cd /opt/boero-infra
-cp .env.staging.example .env.staging
+cp .env.example .env.staging
 chmod 600 .env.staging
 ```
 
-Completar `.env.staging` sin versionarlo. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`.
+Completar `.env.staging` sin versionarlo y usar la URL pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL`. Como staging continúa por HTTP, establecer `AUTH_COOKIE_SECURE=false`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`.
 
 Validar antes de iniciar:
 
 ```bash
-docker compose --env-file .env.staging -f compose.staging.yaml config --quiet
+make preflight ENV=staging
 make bootstrap ENV=staging
 make status ENV=staging
 ```
