@@ -20,3 +20,14 @@
 _Despliega artefactos inmutables, separa responsabilidades y mantiene una operación reproducible por ambiente._
 
 </div>
+
+## Disponibilidad de los ambientes
+
+El desarrollo local continúa en los repositorios de UI y API. **Staging y producción conservan su configuración, pero actualmente ninguno dispone de una VPS provisionada.** Producción aún no tuvo su primer despliegue.
+
+Los pipelines de las aplicaciones mantienen CI y publicación de imágenes. El cambio preparado para ambos repositorios desactiva el job automático `deploy-staging`; producción conserva su workflow manual. La desactivación tendrá efecto en GitHub cuando ese cambio llegue a la rama cuyo workflow se ejecuta.
+
+- [Preparación y futura operación de staging](docs/STAGING.md).
+- [Preparación de producción](docs/PRODUCTION.md).
+
+Conservar Compose, perfiles, ejemplos de variables y scripts de ambos ambientes. Provisionar el servidor y verificar su configuración antes de habilitar o ejecutar un despliegue.

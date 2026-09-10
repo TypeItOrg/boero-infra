@@ -1,6 +1,8 @@
-# Operación de staging
+# Preparación y operación futura de staging
 
-Este documento registra la instalación realizada en la VPS y el flujo operativo vigente.
+Staging conserva su configuración, pero actualmente no dispone de una VPS provisionada. Producción tampoco tiene una VPS y aún no tuvo su primer despliegue. Este documento describe cómo preparar y operar staging cuando vuelva a existir infraestructura; no acredita un ambiente activo.
+
+El cambio preparado en UI y API mantiene CI y publicación de imágenes, pero desactiva `deploy-staging` mediante `if: ${{ false }}`. La desactivación se hará efectiva cuando el cambio llegue a la rama cuyo workflow se ejecuta. Se conservan Compose, perfiles, ejemplos de variables y scripts.
 
 ## Arquitectura
 
@@ -18,7 +20,7 @@ Internet por HTTP
 
 ## Instalación inicial
 
-En la VPS:
+Cuando se haya provisionado la VPS:
 
 ```bash
 git clone https://github.com/TypeItOrg/boero-infra.git /opt/boero-infra
@@ -27,7 +29,7 @@ cp .env.example .env.staging
 chmod 600 .env.staging
 ```
 
-Completar `.env.staging` sin versionarlo y usar la URL pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL`. Como staging continúa por HTTP, establecer `AUTH_COOKIE_SECURE=false`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`.
+Completar `.env.staging` sin versionarlo y usar la URL pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL`. El ejemplo de Nginx usa HTTP: si se adopta esa topología temporal, establecer `AUTH_COOKIE_SECURE=false`; con HTTPS, usar `true`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`.
 
 Validar antes de iniciar:
 
@@ -42,10 +44,13 @@ Los volúmenes son externos al proyecto Compose:
 - `boero-ui-next-cache-staging`
 - `boero-api-postgres-data-staging`
 - `boero-api-redis-data-staging`
+- `boero-api-logs-staging`
 
 `make bootstrap` los crea si no existen. Nunca usar `down --volumes` como parte de una actualización normal.
 
 ## Migración realizada desde los repositorios de aplicación
+
+Esta sección conserva el antecedente de la adopción inicial. No forma parte del bootstrap de una VPS nueva y no debe ejecutarse como si describiera el estado actual.
 
 La adopción inicial detuvo los Compose independientes sin eliminar volúmenes y levantó el stack compartido:
 
@@ -64,7 +69,7 @@ Los Compose, env examples y configuraciones Nginx de staging/producción fueron 
 
 ## Acceso de GitHub Actions
 
-Los repositorios `boero-ui` y `boero-api` tienen un GitHub Environment llamado `staging`, restringido a la rama `staging`, con estos secrets:
+Antes de reactivar despliegues, crear o revisar el GitHub Environment `staging` de `boero-ui` y `boero-api`, restringirlo a la rama `staging` y configurar estos secrets para la nueva VPS:
 
 | Secret | Contenido |
 |---|---|
@@ -77,7 +82,11 @@ La clave pública correspondiente debe existir en `authorized_keys` del usuario 
 
 ## Despliegue automático
 
-Un push a `staging` en cualquiera de las aplicaciones:
+Mientras `deploy-staging` tenga `if: ${{ false }}`, un push a `staging` valida y publica la imagen, pero omite toda conexión SSH.
+
+Para reactivarlo, provisionar la VPS, completar la configuración y el bootstrap, verificar los secrets y restaurar en ambos workflows la condición `github.event_name == 'push' && github.ref_name == 'staging'`. Publicar ese cambio en la rama `staging` cuando se autorice la reactivación.
+
+Una vez reactivado, un push a `staging`:
 
 1. Ejecuta las validaciones de CI.
 2. Publica `ghcr.io/typeitorg/<app>:sha-<commit>`.
@@ -89,6 +98,8 @@ Un push a `staging` en cualquiera de las aplicaciones:
 Los locks `/tmp/boero-infra-git.lock` y `/tmp/boero-infra-staging.lock` evitan carreras entre pipelines.
 
 ## Operación cotidiana
+
+Los siguientes comandos requieren un ambiente ya provisionado y operativo.
 
 ```bash
 cd /opt/boero-infra
@@ -122,4 +133,4 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Staging continúa por HTTP e IP. No debe usar datos reales; sólo los puertos administrativos necesarios y `80` deben estar expuestos públicamente.
+El ejemplo prepara acceso por HTTP e IP; ajustar Nginx y cookies si se incorpora HTTPS. No usar datos reales en staging. Exponer únicamente los puertos administrativos necesarios y los puertos web del esquema elegido.
