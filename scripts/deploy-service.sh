@@ -83,7 +83,7 @@ deploy_version() {
   target_version="$1"
   update_version "$target_version" || return
   run_compose "$env_file" pull "$service" || return
-  run_compose "$env_file" up -d --no-deps --wait --wait-timeout 120 "$service"
+  run_compose "$env_file" up -d --no-deps --wait --wait-timeout 480 "$service"
 }
 
 preflight_version "$version"
