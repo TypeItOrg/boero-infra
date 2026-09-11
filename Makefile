@@ -9,7 +9,7 @@ VOLUME_SUFFIX := $(if $(filter production,$(ENV)),prod,$(ENV))
 
 .DEFAULT_GOAL := status
 
-.PHONY: prepare preflight bootstrap deploy-ui deploy-api rollback-ui rollback-api status logs logs-api logs-api-file logs-api-request down test
+.PHONY: prepare preflight bootstrap deploy-ui deploy-api rollback-ui rollback-api backup-db status logs logs-api logs-api-file logs-api-request down test
 
 prepare:
 	docker volume create boero-ui-next-cache-$(VOLUME_SUFFIX)
@@ -39,6 +39,9 @@ rollback-ui:
 
 rollback-api: prepare
 	flock $(LOCK_FILE) ./scripts/rollback-service.sh $(ENV) api
+
+backup-db:
+	flock $(LOCK_FILE) ./scripts/backup-postgres.sh $(ENV)
 
 
 status:

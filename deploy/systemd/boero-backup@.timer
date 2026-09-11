@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Boero PostgreSQL backup for %i
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+RandomizedDelaySec=15m
+Persistent=true
+Unit=boero-backup@%i.service
+
+[Install]
+WantedBy=timers.target

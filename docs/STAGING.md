@@ -1,26 +1,27 @@
-# Preparación y operación futura de staging
+# Operación y hardening de staging
 
-Staging conserva su configuración, pero actualmente no dispone de una VPS provisionada. Producción tampoco tiene una VPS y aún no tuvo su primer despliegue. Este documento describe cómo preparar y operar staging cuando vuelva a existir infraestructura; no acredita un ambiente activo.
+Staging está provisionado en un servidor autohosteado. Producción todavía no tiene infraestructura y no tuvo su primer despliegue. La configuración versionada describe el estado deseado; antes de operar hay que comprobar contenedores, variables efectivas, Nginx y salud en el host.
 
 El cambio preparado en UI y API mantiene CI y publicación de imágenes, pero desactiva `deploy-staging` mediante `if: ${{ false }}`. La desactivación se hará efectiva cuando el cambio llegue a la rama cuyo workflow se ejecuta. Se conservan Compose, perfiles, ejemplos de variables y scripts.
 
 ## Arquitectura
 
 ```text
-Internet por HTTP
-  -> Nginx del host :80
-     -> /api/v1 -> 127.0.0.1:8080 -> api
+Internet por HTTPS
+  -> Nginx del host :443
+     -> /api/v1 -> 404 (la API no es pública)
      -> resto   -> 127.0.0.1:3000 -> ui
   -> red privada de Compose
+     -> UI -> api:8080
      -> PostgreSQL
      -> Redis
 ```
 
 `boero-infra` es dueño de Compose, Nginx, variables del ambiente y comandos operativos. Cada aplicación conserva su Dockerfile, desarrollo local, validaciones y publicación en GHCR.
 
-## Instalación inicial
+UI y API continúan publicados en loopback para las comprobaciones operativas del host. PostgreSQL y Redis sólo están disponibles dentro de Compose.
 
-Cuando se haya provisionado la VPS:
+## Preparación del checkout
 
 ```bash
 git clone https://github.com/TypeItOrg/boero-infra.git /opt/boero-infra
@@ -29,7 +30,7 @@ cp .env.example .env.staging
 chmod 600 .env.staging
 ```
 
-Completar `.env.staging` sin versionarlo y usar la URL pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL`. El ejemplo de Nginx usa HTTP: si se adopta esa topología temporal, establecer `AUTH_COOKIE_SECURE=false`; con HTTPS, usar `true`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`.
+Completar `.env.staging` sin versionarlo, usar la URL HTTPS pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL` y mantener `AUTH_COOKIE_SECURE=true`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`. Los backups usan por defecto `BACKUP_DIR=/var/backups/boero` y `BACKUP_RETENTION_DAYS=7`.
 
 Validar antes de iniciar:
 
@@ -117,20 +118,77 @@ Comprobaciones directas:
 ```bash
 curl --fail http://127.0.0.1:3000/api/health
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
-curl --fail http://<ip-staging>/
+curl --fail https://<dominio>/
 ```
 
 El rollback del API sólo es seguro cuando las migraciones de Flyway mantienen compatibilidad hacia atrás. Una migración aplicada nunca se revierte automáticamente.
 
 ## Nginx
 
-La configuración fuente está en `deploy/nginx/boero.conf.example`. En el host:
+La configuración fuente está en `deploy/nginx/boero.conf.example`. El ejemplo conserva `_` como valor genérico para `server_name` y para el directorio del certificado de Let's Encrypt; en el host debe mantenerse alineado con la configuración efectiva del certificado.
+
+El sitio rechaza `/api/v1` y `/actuator` antes de llegar a las aplicaciones. Para preservar streaming, el proxy de UI mantiene el buffering desactivado.
+
+En el host, conservar primero una copia recuperable de la configuración activa:
 
 ```bash
+sudo cp /etc/nginx/sites-available/boero /etc/nginx/sites-available/boero.before-hardening
 sudo cp deploy/nginx/boero.conf.example /etc/nginx/sites-available/boero
-sudo ln -s /etc/nginx/sites-available/boero /etc/nginx/sites-enabled/boero
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-El ejemplo prepara acceso por HTTP e IP; ajustar Nginx y cookies si se incorpora HTTPS. No usar datos reales en staging. Exponer únicamente los puertos administrativos necesarios y los puertos web del esquema elegido.
+Los límites se instalan inicialmente con `limit_req_dry_run on` y `limit_conn_dry_run on`. Durante 48 horas representativas, revisar:
+
+```bash
+sudo grep -E 'limit_(req|conn)=(REJECTED_DRY_RUN|REJECTED)' /var/log/nginx/boero.access.log
+```
+
+Después de confirmar que una sesión normal con varios usuarios detrás de la misma IP no produce rechazos, cambiar ambas directivas a `off`, volver a ejecutar `sudo nginx -t` y recargar. En enforcement, los excesos reciben `429`. No asociar esos `429` con una cárcel de Fail2ban porque una IP puede representar una institución completa.
+
+Validar desde fuera del host:
+
+```bash
+curl --fail https://<dominio>/api/health
+curl --fail-with-body https://<dominio>/
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://<dominio>/api/v1)" = 404
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://<dominio>/api/v1/auth/login)" = 404
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://<dominio>/actuator)" = 404
+```
+
+El health debe responder correctamente; las tres rutas restringidas deben devolver `404`. La API continúa disponible únicamente para la UI en Docker y para readiness por loopback. Si se incorpora un CDN o proxy externo, configurar `real_ip` sólo con sus rangos oficiales antes de habilitar límites por IP.
+
+## Backups locales
+
+El backup diario usa `pg_dump` en formato custom, valida el archivo con `pg_restore --list`, aplica permisos `0600` y recién entonces elimina archivos que superan la retención. Comparte el lock de despliegue del ambiente para no competir con una actualización.
+
+Preparar el directorio y ejecutar el primer backup antes de habilitar el timer:
+
+```bash
+sudo install -d -m 0700 /var/backups/boero/staging
+sudo make -C /opt/boero-infra backup-db ENV=staging
+sudo find /var/backups/boero/staging -type f -name '*.dump' -exec ls -lh {} \;
+```
+
+Estos archivos permiten recuperarse de errores operativos, pero no sobreviven a la pérdida del disco o del host. Copiarlos fuera de la máquina sigue siendo una tarea pendiente. Ensayar mensualmente una restauración en una base descartable; nunca restaurar sobre staging para probar el archivo.
+
+## Timer de backup
+
+Las unidades de `deploy/systemd` ejecutan el backup diariamente a las 02:15, con una demora aleatoria máxima de 15 minutos para evitar acoplarlo rígidamente a otras tareas del host. No ejecutan monitoreo ni limpieza automática de imágenes Docker.
+
+Instalación:
+
+```bash
+sudo install -m 0644 deploy/systemd/boero-backup@.service deploy/systemd/boero-backup@.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now boero-backup@staging.timer
+```
+
+Comprobación inicial:
+
+```bash
+sudo systemctl start boero-backup@staging.service
+sudo systemctl status boero-backup@staging.service
+sudo systemctl list-timers boero-backup@staging.timer
+sudo journalctl -u boero-backup@staging.service --since today
+```

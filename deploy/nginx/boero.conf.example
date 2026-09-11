@@ -3,10 +3,24 @@ map $http_upgrade $connection_upgrade {
     ''      '';
 }
 
-upstream boero_api {
-    server 127.0.0.1:8080;
-    keepalive 32;
+map "$request_method:$uri" $boero_auth_limit_key {
+    default                                              "";
+    ~^POST:/auth/login/?$                                $binary_remote_addr;
+    ~^POST:/auth/register/?$                             $binary_remote_addr;
+    ~^POST:/auth/password-recovery/?$                    $binary_remote_addr;
+    ~^POST:/auth/password-recovery/reset/?$              $binary_remote_addr;
+    ~^POST:/admin/auth/login/?$                          $binary_remote_addr;
 }
+
+limit_req_zone $binary_remote_addr zone=boero_ui_per_ip:10m rate=20r/s;
+limit_req_zone $boero_auth_limit_key zone=boero_auth_per_ip:10m rate=30r/m;
+limit_conn_zone $binary_remote_addr zone=boero_connections_per_ip:10m;
+limit_conn_zone $server_name zone=boero_connections_per_server:1m;
+
+log_format boero '$remote_addr [$time_local] "$request_method $uri $server_protocol" '
+                 '$status $body_bytes_sent request_time=$request_time '
+                 'upstream_time=$upstream_response_time '
+                 'limit_req=$limit_req_status limit_conn=$limit_conn_status';
 
 upstream boero_ui {
     server 127.0.0.1:3000;
@@ -14,16 +28,16 @@ upstream boero_ui {
 }
 
 server {
-    listen 80;
-    listen [::]:80;
+    listen 80 default_server;
+    listen [::]:80 default_server;
     server_name _;
 
     return 301 https://$host$request_uri;
 }
 
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
     server_name _;
 
     http2 on;
@@ -33,12 +47,30 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-    client_max_body_size 10m;
+    server_tokens off;
+
+    client_header_timeout 10s;
+    client_body_timeout 10s;
+    client_max_body_size 1m;
+    keepalive_timeout 30s;
+    send_timeout 30s;
+    reset_timedout_connection on;
+
+    # Keep both limiters in observation mode for the first 48 representative hours.
+    # Change these directives to "off" only after reviewing boero.access.log.
+    limit_req_dry_run on;
+    limit_conn_dry_run on;
+    limit_req_status 429;
+    limit_conn_status 429;
+
+    access_log /var/log/nginx/boero.access.log boero buffer=64k flush=1s;
 
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "base-uri 'self'; frame-ancestors 'self'; object-src 'none'" always;
 
     gzip on;
     gzip_comp_level 5;
@@ -61,23 +93,20 @@ server {
         return 404;
     }
 
-    location /api/v1/ {
-        proxy_pass http://boero_api;
-        proxy_http_version 1.1;
+    location = /api/v1 {
+        return 404;
+    }
 
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Connection $connection_upgrade;
-        proxy_set_header Upgrade $http_upgrade;
-
-        proxy_connect_timeout 5s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+    location ^~ /api/v1/ {
+        return 404;
     }
 
     location / {
+        limit_req zone=boero_ui_per_ip burst=100 nodelay;
+        limit_req zone=boero_auth_per_ip burst=20 nodelay;
+        limit_conn boero_connections_per_ip 50;
+        limit_conn boero_connections_per_server 200;
+
         proxy_pass http://boero_ui;
         proxy_http_version 1.1;
 

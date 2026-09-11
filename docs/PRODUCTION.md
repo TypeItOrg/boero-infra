@@ -1,6 +1,6 @@
 # Preparación de producción
 
-Producción está preparada estructuralmente, pero nunca tuvo una VPS provisionada y permanece inactiva. Staging tampoco dispone actualmente de una VPS. Se conservan las configuraciones de ambos ambientes para uso futuro. No debe ejecutarse `make bootstrap ENV=production` ni el workflow manual hasta disponer de infraestructura y completar este documento.
+Producción está preparada estructuralmente, pero nunca tuvo una VPS provisionada y permanece inactiva. Staging sí está provisionado en un servidor autohosteado. Se conservan las configuraciones de ambos ambientes, pero no debe ejecutarse `make bootstrap ENV=production` ni el workflow manual hasta disponer de infraestructura productiva y completar este documento.
 
 ## Topología prevista
 

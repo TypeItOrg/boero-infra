@@ -1,0 +1,9 @@
+[Unit]
+Description=Boero PostgreSQL backup for %i
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/boero-infra
+ExecStart=/usr/bin/make backup-db ENV=%i
