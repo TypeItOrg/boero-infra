@@ -32,6 +32,8 @@ chmod 600 .env.staging
 
 Completar `.env.staging` sin versionarlo, usar la URL HTTPS pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL` y mantener `AUTH_COOKIE_SECURE=true`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`. Los backups usan por defecto `BACKUP_DIR=/var/backups/boero` y `BACKUP_RETENTION_DAYS=7`.
 
+Para claves de acceso, configurar `WEBAUTHN_RP_ID` con el hostname público del frontend (sin protocolo ni ruta) y `WEBAUTHN_ALLOWED_ORIGINS` con su origen HTTPS exacto. En el staging actual: `WEBAUTHN_RP_ID=staging.typeit.com.ar` y `WEBAUTHN_ALLOWED_ORIGINS=https://staging.typeit.com.ar`. Compose exige ambas variables y las inyecta en la API.
+
 Validar antes de iniciar:
 
 ```bash
