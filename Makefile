@@ -16,6 +16,7 @@ prepare:
 	docker volume create boero-api-postgres-data-$(VOLUME_SUFFIX)
 	docker volume create boero-api-redis-data-$(VOLUME_SUFFIX)
 	docker volume create boero-api-logs-$(VOLUME_SUFFIX)
+	docker volume create boero-api-enrollment-storage-$(VOLUME_SUFFIX)
 
 
 preflight:

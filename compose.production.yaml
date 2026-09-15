@@ -24,6 +24,8 @@ volumes:
     name: boero-api-redis-data-prod
   api-logs:
     name: boero-api-logs-prod
+  api-enrollment-storage:
+    name: boero-api-enrollment-storage-prod
 
 networks:
   default:
