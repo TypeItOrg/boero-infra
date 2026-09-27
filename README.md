@@ -29,5 +29,6 @@ Los pipelines de las aplicaciones mantienen CI y publicación de imágenes. El c
 
 - [Operación y hardening de staging](docs/STAGING.md).
 - [Preparación de producción](docs/PRODUCTION.md).
+- [Configuración de archivos en Amazon S3](docs/S3.md).
 
 Conservar Compose, perfiles, ejemplos de variables y scripts de ambos ambientes. Verificar contenedores, salud y configuración efectiva antes de operar staging; no ejecutar producción hasta provisionar su infraestructura.

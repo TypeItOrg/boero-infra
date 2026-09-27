@@ -16,6 +16,7 @@ prepare:
 	docker volume create boero-api-postgres-data-$(VOLUME_SUFFIX)
 	docker volume create boero-api-redis-data-$(VOLUME_SUFFIX)
 	docker volume create boero-api-logs-$(VOLUME_SUFFIX)
+	# Keep the historical volume name so enrollment files remain mounted after the path generalization.
 	docker volume create boero-api-enrollment-storage-$(VOLUME_SUFFIX)
 
 

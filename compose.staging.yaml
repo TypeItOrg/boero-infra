@@ -24,7 +24,7 @@ volumes:
     name: boero-api-redis-data-staging
   api-logs:
     name: boero-api-logs-staging
-  api-enrollment-storage:
+  api-storage:
     name: boero-api-enrollment-storage-staging
 
 networks:

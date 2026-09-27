@@ -40,7 +40,14 @@ services:
       - "127.0.0.1:${API_HOST_PORT:-8080}:8080"
     environment:
       SERVER_PORT: 8080
-      ENROLLMENT_STORAGE_DIR: /app/storage/enrollments
+      STORAGE_LOCAL_DIR: /app/storage
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-}
+      STORAGE_S3_PREFIX: ${STORAGE_S3_PREFIX:-boero/}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       DB_HOST: postgres
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -76,7 +83,7 @@ services:
       - /tmp:size=64m,mode=1777
     volumes:
       - api-logs:/app/logs
-      - api-enrollment-storage:/app/storage/enrollments
+      - api-storage:/app/storage
     cap_drop:
       - ALL
     security_opt:
@@ -143,5 +150,5 @@ volumes:
     external: true
   api-logs:
     external: true
-  api-enrollment-storage:
+  api-storage:
     external: true
