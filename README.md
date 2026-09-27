@@ -20,15 +20,3 @@
 _Despliega artefactos inmutables, separa responsabilidades y mantiene una operación reproducible por ambiente._
 
 </div>
-
-## Disponibilidad de los ambientes
-
-El desarrollo local continúa en los repositorios de UI y API. **Staging está provisionado en un servidor autohosteado; producción todavía no dispone de infraestructura.** La configuración versionada no reemplaza la comprobación del estado real del host.
-
-Los pipelines de las aplicaciones mantienen CI y publicación de imágenes. El cambio preparado para ambos repositorios desactiva el job automático `deploy-staging`; producción conserva su workflow manual. La desactivación tendrá efecto en GitHub cuando ese cambio llegue a la rama cuyo workflow se ejecuta.
-
-- [Operación y hardening de staging](docs/STAGING.md).
-- [Preparación de producción](docs/PRODUCTION.md).
-- [Configuración de archivos en Amazon S3](docs/S3.md).
-
-Conservar Compose, perfiles, ejemplos de variables y scripts de ambos ambientes. Verificar contenedores, salud y configuración efectiva antes de operar staging; no ejecutar producción hasta provisionar su infraestructura.
