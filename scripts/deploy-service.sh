@@ -83,6 +83,12 @@ deploy_version() {
   target_version="$1"
   update_version "$target_version" || return
   run_compose "$env_file" pull "$service" || return
+
+  if [ "$service" = "api" ]; then
+    echo "Preparing API storage permissions for $target_version"
+    run_compose "$env_file" run --rm --no-deps api-storage-init || return
+  fi
+
   run_compose "$env_file" up -d --no-deps --wait --wait-timeout 600 "$service"
 }
 

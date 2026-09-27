@@ -33,7 +33,7 @@ services:
         max-file: ${LOG_MAX_FILES:-5}
 
   api:
-    image: ${API_IMAGE:-ghcr.io/typeitorg/boero-api}:${API_VERSION:?API_VERSION is required}
+    image: &api-image ${API_IMAGE:-ghcr.io/typeitorg/boero-api}:${API_VERSION:?API_VERSION is required}
     pull_policy: always
     init: true
     ports:
@@ -98,6 +98,33 @@ services:
       timeout: 5s
       retries: 3
       start_period: 480s
+
+  api-storage-init:
+    image: *api-image
+    profiles: [maintenance]
+    pull_policy: never
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        owner="$$(id -u appuser):$$(id -g appuser)"
+        chown -hR "$$owner" /app/storage
+        chmod -R u+rwX /app/storage
+    network_mode: none
+    read_only: true
+    volumes:
+      - api-storage:/app/storage
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 0.25
+    logging: *logging
 
   redis:
     image: redis:7-alpine

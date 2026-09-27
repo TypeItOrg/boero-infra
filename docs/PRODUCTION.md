@@ -90,3 +90,12 @@ make rollback-api ENV=production
 ```
 
 El rollback de aplicación no deshace migraciones. Los cambios destructivos de base deben diseñarse en fases compatibles.
+
+`make bootstrap`, `make deploy-api` y `make rollback-api` preparan automáticamente
+el volumen `boero-api-enrollment-storage-prod`, montado en `/app/storage`, después
+de descargar la imagen y antes de iniciar la API. El auxiliar `api-storage-init`
+usa el UID/GID de `appuser` de esa misma imagen para ajustar propietario y permisos
+de lectura/escritura del propietario, sin borrar archivos ni acceder a PostgreSQL.
+El auxiliar es transitorio, corre como root sin red ni credenciales de aplicación;
+la API sigue corriendo como usuario no privilegiado. Un fallo de preparación impide
+arrancar esa versión. Un `docker compose up` directo no ejecuta esta preparación.

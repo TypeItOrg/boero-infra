@@ -48,8 +48,20 @@ Los volúmenes son externos al proyecto Compose:
 - `boero-api-postgres-data-staging`
 - `boero-api-redis-data-staging`
 - `boero-api-logs-staging`
+- `boero-api-enrollment-storage-staging`, montado en `/app/storage` (conserva el nombre histórico).
 
 `make bootstrap` los crea si no existen. Nunca usar `down --volumes` como parte de una actualización normal.
+
+Después de descargar la imagen, `make bootstrap`, `make deploy-api` y `make rollback-api`
+ejecutan `api-storage-init` antes de iniciar la API. El contenedor auxiliar usa la misma
+imagen y obtiene el UID/GID de `appuser` para ajustar recursivamente el propietario y
+habilitar lectura/escritura del propietario en el volumen de archivos existente.
+No borra archivos ni toca PostgreSQL; no tiene red ni credenciales de aplicación.
+Sólo el auxiliar corre como root: la API conserva su usuario no privilegiado y su
+filesystem raíz de sólo lectura. Si la preparación falla, esa versión no se inicia.
+El auxiliar está en el perfil `maintenance`, se ejecuta explícitamente con `run --rm`
+y no queda levantado con el stack. No sustituir los comandos de despliegue por un
+`docker compose up` directo, que omite esta preparación.
 
 ## Migración realizada desde los repositorios de aplicación
 

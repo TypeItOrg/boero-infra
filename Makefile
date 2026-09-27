@@ -26,6 +26,7 @@ preflight:
 
 bootstrap: preflight prepare
 	$(COMPOSE) $(COMPOSE_ARGS) pull
+	$(COMPOSE) $(COMPOSE_ARGS) run --rm --no-deps api-storage-init
 	$(COMPOSE) $(COMPOSE_ARGS) up -d --wait --wait-timeout 180
 
 deploy-ui:
