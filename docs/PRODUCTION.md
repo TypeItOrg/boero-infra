@@ -17,6 +17,34 @@ Si producción comparte host con staging, se deben definir otros puertos y sitio
 
 ## Preparación del servidor
 
+### Dominio general, instituciones y passkeys
+
+Para `https://typeit.com.ar` y `https://cboero.typeit.com.ar`, configurar en el futuro
+archivo privado `.env.production`:
+
+```dotenv
+FRONTEND_PUBLIC_URL=https://typeit.com.ar
+INSTITUTIONAL_BASE_DOMAIN=typeit.com.ar
+WEBAUTHN_RP_ID=typeit.com.ar
+WEBAUTHN_ALLOWED_ORIGINS=https://typeit.com.ar
+EMAIL_VERIFICATION_FRONTEND_URL=https://typeit.com.ar
+PASSWORD_RECOVERY_FRONTEND_URL=https://typeit.com.ar
+AUTH_COOKIE_SECURE=true
+```
+
+Ambos dominios necesitan DNS/HTTPS válidos y apuntan a la misma UI productiva.
+`publicSubdomain=cboero` selecciona la institución, sin renombrar su slug. El acceso
+general conserva el selector y la administración de plataforma; el institucional
+redirige las rutas de plataforma al login institucional.
+
+El RP ID común permite registrar y usar una passkey para la misma cuenta/institución
+desde cualquiera de esos dos dominios. La API agrega sólo el origen institucional
+activo de la solicitud: no agregar comodines ni una lista global de instituciones.
+Las llaves de local/testing/staging no se convierten en llaves productivas; hay que
+registrar una nueva credencial productiva. Este ejemplo no activa producción.
+
+### Checkout y configuración privada
+
 Cuando exista la VPS:
 
 ```bash

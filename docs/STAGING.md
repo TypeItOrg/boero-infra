@@ -2,7 +2,12 @@
 
 Staging está provisionado en un servidor autohosteado. Producción todavía no tiene infraestructura y no tuvo su primer despliegue. La configuración versionada describe el estado deseado; antes de operar hay que comprobar contenedores, variables efectivas, Nginx y salud en el host.
 
-El cambio preparado en UI y API mantiene CI y publicación de imágenes, pero desactiva `deploy-staging` mediante `if: ${{ false }}`. La desactivación se hará efectiva cuando el cambio llegue a la rama cuyo workflow se ejecuta. Se conservan Compose, perfiles, ejemplos de variables y scripts.
+Los workflows actuales del código fuente en UI y API ejecutan `deploy-staging` para
+`push` a `staging`, después de CI y publicación. La referencia anterior a
+`if: ${{ false }}` ya no describe estos archivos. Esto documenta la política del
+checkout, no confirma qué revisión está activa en GitHub ni la salud del servidor.
+Se conservan Compose, perfiles, ejemplos y comandos de staging/producción; la
+incorporación de QA no cambia sus disparadores.
 
 ## Arquitectura
 
@@ -30,9 +35,15 @@ cp .env.example .env.staging
 chmod 600 .env.staging
 ```
 
-Completar `.env.staging` sin versionarlo, usar la URL HTTPS pública del frontend en `PASSWORD_RECOVERY_FRONTEND_URL` y mantener `AUTH_COOKIE_SECURE=true`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`. Los backups usan por defecto `BACKUP_DIR=/var/backups/boero` y `BACKUP_RETENTION_DAYS=7`.
+Completar `.env.staging` sin versionarlo, usar la URL HTTPS pública del frontend en `FRONTEND_PUBLIC_URL`, `EMAIL_VERIFICATION_FRONTEND_URL` y `PASSWORD_RECOVERY_FRONTEND_URL` y mantener `AUTH_COOKIE_SECURE=true`. `UI_VERSION` y `API_VERSION` deben usar imágenes inmutables `sha-<commit>`. Los backups usan por defecto `BACKUP_DIR=/var/backups/boero` y `BACKUP_RETENTION_DAYS=7`.
 
-Para claves de acceso, configurar `WEBAUTHN_RP_ID` con el hostname público del frontend (sin protocolo ni ruta) y `WEBAUTHN_ALLOWED_ORIGINS` con su origen HTTPS exacto. En el staging actual: `WEBAUTHN_RP_ID=staging.typeit.com.ar` y `WEBAUTHN_ALLOWED_ORIGINS=https://staging.typeit.com.ar`. Compose exige ambas variables y las inyecta en la API.
+Para claves de acceso, configurar `WEBAUTHN_RP_ID` con el hostname público del frontend (sin protocolo ni ruta) y `WEBAUTHN_ALLOWED_ORIGINS` con su origen HTTPS exacto. En el staging actual: `WEBAUTHN_RP_ID=staging.typeit.com.ar` y `WEBAUTHN_ALLOWED_ORIGINS=https://staging.typeit.com.ar`. Compose exige ambas variables y las inyecta en la API. Para activar el acceso
+institucional en un paso posterior, configurar `INSTITUTIONAL_BASE_DOMAIN=staging.typeit.com.ar`
+en UI/API. `WEBAUTHN_ALLOWED_ORIGINS` conserva sólo el origen general; la API agrega
+el origen institucional activo resuelto para la solicitud (por ejemplo
+`https://cboero.staging.typeit.com.ar`), sin autorizar instituciones hermanas.
+No usar wildcards para WebAuthn ni inferir el nombre público desde el slug; requiere DNS,
+HTTPS y el `publicSubdomain` de la institución correctos. Esta entrega no activa DNS/TLS.
 
 Validar antes de iniciar:
 
@@ -84,7 +95,7 @@ Los Compose, env examples y configuraciones Nginx de staging/producción fueron 
 
 ## Acceso de GitHub Actions
 
-Antes de reactivar despliegues, crear o revisar el GitHub Environment `staging` de `boero-ui` y `boero-api`, restringirlo a la rama `staging` y configurar estos secrets para la nueva VPS:
+Antes de operar, crear o revisar el GitHub Environment `staging` de `boero-ui` y `boero-api`, restringirlo a la rama `staging` y configurar estos secrets para la nueva VPS:
 
 | Secret | Contenido |
 |---|---|
@@ -97,11 +108,8 @@ La clave pública correspondiente debe existir en `authorized_keys` del usuario 
 
 ## Despliegue automático
 
-Mientras `deploy-staging` tenga `if: ${{ false }}`, un push a `staging` valida y publica la imagen, pero omite toda conexión SSH.
-
-Para reactivarlo, provisionar la VPS, completar la configuración y el bootstrap, verificar los secrets y restaurar en ambos workflows la condición `github.event_name == 'push' && github.ref_name == 'staging'`. Publicar ese cambio en la rama `staging` cuando se autorice la reactivación.
-
-Una vez reactivado, un push a `staging`:
+Según `boero-api/.github/workflows/ci.yaml` y
+`boero-ui/.github/workflows/ci.yaml`, un push a `staging`:
 
 1. Ejecuta las validaciones de CI.
 2. Publica `ghcr.io/typeitorg/<app>:sha-<commit>`.

@@ -6,8 +6,8 @@ service="${2:-}"
 version="${3:-}"
 
 case "$environment" in
-  staging|production) ;;
-  *) echo "Environment must be staging or production" >&2; exit 1 ;;
+  qa|staging|production) ;;
+  *) echo "Environment must be qa, staging or production" >&2; exit 1 ;;
 esac
 
 case "$service" in
@@ -24,6 +24,12 @@ esac
 case "$commit_sha" in
   ""|*[!0-9a-f]*) echo "Version must contain a lowercase hexadecimal commit SHA" >&2; exit 1 ;;
 esac
+
+# Existing staging/production tooling accepts legacy short tags; QA only accepts full SHAs.
+if [ "$environment" = "qa" ] && [ "${#commit_sha}" -ne 40 ]; then
+  echo "QA version must contain a full 40-character commit SHA" >&2
+  exit 1
+fi
 
 env_file=".env.$environment"
 base_compose_file="compose.yaml"
@@ -93,6 +99,9 @@ deploy_version() {
 }
 
 preflight_version "$version"
+if [ "$service" = "api" ]; then
+  "$(dirname "$0")/prepare-volumes.sh" "$environment"
+fi
 mkdir -p "$state_dir"
 
 if [ "$current_version" = "$version" ]; then
