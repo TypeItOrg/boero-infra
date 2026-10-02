@@ -1,0 +1,380 @@
+{
+  "version": 1,
+  "completionBoundary": "local-only",
+  "requirements": {
+    "Q01": [
+      "isolated-compose",
+      "isolated-runtime"
+    ],
+    "Q02": [
+      "qa-profile",
+      "flyway-health"
+    ],
+    "Q03": [
+      "qa-operations",
+      "backup-restore"
+    ],
+    "Q04": [
+      "invalid-input",
+      "failed-deploy-rollback"
+    ],
+    "C01": [
+      "publication-gates",
+      "existing-flows"
+    ],
+    "C02": [
+      "manual-qa-only"
+    ],
+    "I01": [
+      "domain-invariant",
+      "postgres-constraints",
+      "legacy-update"
+    ],
+    "I02": [
+      "minimal-resolution",
+      "unknown-inactive",
+      "unavailable"
+    ],
+    "A01": [
+      "generic-flows",
+      "platform-flow"
+    ],
+    "A02": [
+      "branded-desktop",
+      "branded-mobile",
+      "no-logo"
+    ],
+    "A03": [
+      "payload-context",
+      "attempt-context",
+      "session-context",
+      "untrusted-header"
+    ],
+    "A04": [
+      "passkey-general-branded",
+      "untrusted-origin"
+    ],
+    "A05": [
+      "refresh-regression",
+      "refresh-browser"
+    ],
+    "A06": [
+      "canonical-email",
+      "registration-verification",
+      "password-recovery",
+      "invalid-tokens"
+    ],
+    "L01": [
+      "platform-logo-lifecycle"
+    ],
+    "L02": [
+      "institution-logo-lifecycle",
+      "logo-authorization"
+    ],
+    "L03": [
+      "real-image-validation",
+      "replacement-failure",
+      "logo-cache-fallback"
+    ],
+    "S01": [
+      "preservation"
+    ],
+    "D01": [
+      "configuration-runbook"
+    ],
+    "V01": [
+      "missing-skipped-failed",
+      "stale-evidence"
+    ]
+  },
+  "requiredKinds": {
+    "I01.domain-invariant": [
+      "api-unit",
+      "ui-unit"
+    ],
+    "I01.postgres-constraints": [
+      "api-unit",
+      "api-integration"
+    ],
+    "I01.legacy-update": [
+      "ui-unit",
+      "api-integration",
+      "browser"
+    ],
+    "I02.minimal-resolution": [
+      "api-unit"
+    ],
+    "I02.unknown-inactive": [
+      "api-unit",
+      "ui-unit",
+      "api-integration"
+    ],
+    "I02.unavailable": [
+      "api-unit",
+      "ui-unit"
+    ],
+    "A01.generic-flows": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "A01.platform-flow": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "A02.branded-desktop": [
+      "ui-unit",
+      "browser"
+    ],
+    "A02.branded-mobile": [
+      "ui-unit",
+      "browser"
+    ],
+    "A02.no-logo": [
+      "ui-unit",
+      "browser"
+    ],
+    "A03.payload-context": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "A03.attempt-context": [
+      "api-unit",
+      "api-integration",
+      "http-runtime"
+    ],
+    "A03.session-context": [
+      "api-unit",
+      "http-runtime"
+    ],
+    "A03.untrusted-header": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "A04.passkey-general-branded": [
+      "api-unit",
+      "api-integration",
+      "browser"
+    ],
+    "A04.untrusted-origin": [
+      "api-unit",
+      "browser",
+      "ui-unit"
+    ],
+    "A05.refresh-regression": [
+      "api-unit",
+      "ui-unit",
+      "api-integration"
+    ],
+    "A06.canonical-email": [
+      "api-unit",
+      "browser"
+    ],
+    "A06.registration-verification": [
+      "api-unit",
+      "api-integration",
+      "browser"
+    ],
+    "A06.password-recovery": [
+      "api-unit",
+      "api-integration",
+      "browser"
+    ],
+    "A06.invalid-tokens": [
+      "api-unit",
+      "api-integration",
+      "browser"
+    ],
+    "L01.platform-logo-lifecycle": [
+      "api-unit",
+      "ui-unit",
+      "api-integration",
+      "browser"
+    ],
+    "L02.institution-logo-lifecycle": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "L02.logo-authorization": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "L03.real-image-validation": [
+      "api-unit",
+      "ui-unit",
+      "browser"
+    ],
+    "L03.replacement-failure": [
+      "api-unit",
+      "ui-unit",
+      "api-integration",
+      "browser"
+    ],
+    "L03.logo-cache-fallback": [
+      "api-unit",
+      "ui-unit",
+      "api-integration",
+      "browser"
+    ],
+    "Q01.isolated-runtime": [
+      "runtime"
+    ],
+    "Q02.flyway-health": [
+      "runtime"
+    ],
+    "Q03.backup-restore": [
+      "runtime"
+    ],
+    "Q01.isolated-compose": [
+      "configuration"
+    ],
+    "Q02.qa-profile": [
+      "configuration"
+    ],
+    "Q03.qa-operations": [
+      "configuration"
+    ],
+    "Q04.invalid-input": [
+      "configuration"
+    ],
+    "Q04.failed-deploy-rollback": [
+      "configuration"
+    ],
+    "C01.publication-gates": [
+      "configuration"
+    ],
+    "C01.existing-flows": [
+      "configuration"
+    ],
+    "C02.manual-qa-only": [
+      "configuration"
+    ],
+    "D01.configuration-runbook": [
+      "configuration"
+    ],
+    "A05.refresh-browser": [
+      "browser"
+    ],
+    "S01.preservation": [
+      "preservation"
+    ],
+    "V01.missing-skipped-failed": [
+      "verifier-test"
+    ],
+    "V01.stale-evidence": [
+      "verifier-test"
+    ]
+  },
+  "requiredScreenshots": {
+    "A02.branded-desktop": [
+      "branded-desktop-qa.png",
+      "branded-desktop-staging.png"
+    ],
+    "A02.branded-mobile": [
+      "branded-mobile-qa.png",
+      "branded-mobile-staging.png"
+    ],
+    "A02.no-logo": [
+      "no-logo-desktop.png",
+      "no-logo-mobile.png"
+    ]
+  },
+  "sourcePaths": {
+    "Q01": [
+      "infra/compose.yaml",
+      "infra/compose.qa.yaml"
+    ],
+    "Q02": [
+      "api/src/main/resources/application-qa.properties",
+      "infra/docker/postgres-entrypoint.sh"
+    ],
+    "Q03": [
+      "infra/Makefile",
+      "infra/scripts/bootstrap.sh",
+      "infra/scripts/deploy-service.sh",
+      "infra/scripts/backup-postgres.sh"
+    ],
+    "Q04": [
+      "infra/scripts/deploy-service.sh",
+      "infra/scripts/rollback-service.sh",
+      "infra/tests/qa-config.test.py"
+    ],
+    "C01": [
+      "api/.github/workflows/ci.yaml",
+      "ui/.github/workflows/ci.yaml"
+    ],
+    "C02": [
+      "api/.github/workflows/deploy-qa.yaml",
+      "ui/.github/workflows/deploy-qa.yaml"
+    ],
+    "I01": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/entities/Institution.java",
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/services/UpdateInstitutionPublicAccessUseCase.java",
+      "api/src/main/resources/db/migration/20260930221903__add_institution_public_access_and_logo.sql",
+      "ui/src/features/institutions/components/institution-public-access-form.tsx"
+    ],
+    "I02": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/services/ResolveInstitutionPublicAccessUseCase.java",
+      "ui/src/common/services/institutional-host/institutional-host.service.ts"
+    ],
+    "A01": [
+      "ui/src/common/services/institutional-host/classify-institutional-host.util.ts",
+      "ui/src/features/institutional-auth/components/institutional-login-form.tsx"
+    ],
+    "A02": [
+      "ui/src/features/institutional-auth/components/institutional-brand-identity.tsx",
+      "ui/src/features/institutional-auth/components/institutional-auth-step-header.tsx"
+    ],
+    "A03": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/services/InstitutionalHostContext.java",
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/filters/InstitutionalHostFilter.java",
+      "ui/src/proxy.ts"
+    ],
+    "A04": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/services/TrustedWebAuthnOperations.java",
+      "ui/src/features/institutional-auth/components/institutional-passkey-step.tsx"
+    ],
+    "A05": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/services/RefreshTokenUseCase.java",
+      "ui/src/common/services/auth-proxy/auth-proxy.service.ts"
+    ],
+    "A06": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/services/FrontendAccessUrls.java",
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/services/InstitutionalEmailVerificationMailService.java",
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/auth/services/InstitutionalPasswordRecoveryMailService.java",
+      "ui/src/features/institutional-auth/actions/email-verification.actions.ts"
+    ],
+    "L01": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/controllers/PlatformInstitutionController.java",
+      "ui/src/features/institutions/components/institution-logo-manager.tsx"
+    ],
+    "L02": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/controllers/InstitutionalInstitutionController.java",
+      "ui/src/features/institutions/actions/institution-logo.actions.ts"
+    ],
+    "L03": [
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/services/InstitutionLogoPolicy.java",
+      "api/src/main/java/ar/edu/utn/frvm/typeit/boero_api/institutional/services/InstitutionLogoUseCase.java",
+      "ui/src/app/api/public/institutions/[institutionId]/logo/route.ts"
+    ],
+    "S01": [
+      "infra/scripts/verification/run_acceptance.py"
+    ],
+    "D01": [
+      "infra/docs/QA.md",
+      "infra/docs/qa-institutional-access-checklist.md",
+      "infra/.env.qa.example",
+      "api/.env.dev.example",
+      "ui/.env.example"
+    ],
+    "V01": [
+      "infra/scripts/verification/acceptance.py",
+      "infra/tests/acceptance-verifier.test.py"
+    ]
+  }
+}

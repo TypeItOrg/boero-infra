@@ -1,0 +1,77 @@
+name: boero-qa
+
+services:
+  ui:
+    container_name: boero-ui-qa
+    ports: !override
+      - "127.0.0.1:${UI_HOST_PORT:-3001}:3000"
+
+  api:
+    container_name: boero-api-qa
+    ports: !override
+      - "127.0.0.1:${API_HOST_PORT:-8081}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: qa
+      # QA captures mail internally and cannot accidentally reuse an external SMTP host.
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_SMTP_AUTH: "false"
+      MAIL_SMTP_STARTTLS: "false"
+    depends_on:
+      mailpit:
+        condition: service_healthy
+
+  redis:
+    container_name: boero-redis-qa
+
+  postgres:
+    container_name: boero-postgres-qa
+
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    container_name: boero-mailpit-qa
+    ports:
+      - "127.0.0.1:${MAILPIT_HOST_PORT:-8026}:8025"
+    expose:
+      - "1025"
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: 1000
+    volumes:
+      - mailpit-data:/data
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${MAILPIT_MEMORY_LIMIT:-128m}
+    cpus: 0.25
+    logging:
+      driver: local
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILES:-5}
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  ui-next-cache:
+    name: boero-ui-next-cache-qa
+  postgres-data:
+    name: boero-api-postgres-data-qa
+  redis-data:
+    name: boero-api-redis-data-qa
+  api-logs:
+    name: boero-api-logs-qa
+  api-storage:
+    name: boero-api-enrollment-storage-qa
+  mailpit-data:
+    name: boero-mailpit-data-qa
+
+networks:
+  default:
+    name: boero-network-qa

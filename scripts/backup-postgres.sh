@@ -4,8 +4,8 @@ set -eu
 environment="${1:-}"
 
 case "$environment" in
-  staging|production) ;;
-  *) echo "Environment must be staging or production" >&2; exit 1 ;;
+  qa|staging|production) ;;
+  *) echo "Environment must be qa, staging or production" >&2; exit 1 ;;
 esac
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)

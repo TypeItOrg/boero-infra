@@ -20,3 +20,14 @@
 _Despliega artefactos inmutables, separa responsabilidades y mantiene una operación reproducible por ambiente._
 
 </div>
+
+
+## Ambientes y operación
+
+- [QA aislado y despliegue manual por SHA](docs/QA.md).
+- [Operación de staging](docs/STAGING.md) y [preparación de producción](docs/PRODUCTION.md).
+- [Contrato de aceptación local de QA y acceso institucional](docs/qa-institutional-access-checklist.md).
+
+`ENV` acepta únicamente `qa`, `staging` o `production`; el valor predeterminado sigue
+siendo `staging`. Los cambios de configuración no constituyen un despliegue ni una
+activación pública. Las credenciales privadas y los datos persistentes no se versionan.
