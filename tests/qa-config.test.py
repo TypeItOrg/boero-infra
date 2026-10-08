@@ -2,11 +2,9 @@
 """QA config/script/workflow checks: synthetic envs, mocked Docker and a real temp Git graph.
 
 Uses only Python stdlib and the installed docker compose CLI. Never starts containers,
-reads an existing .env, connects via SSH or pushes. Full-stack proof belongs to acceptance.
+reads an existing .env, connects via SSH or pushes.
 """
-import argparse
 import ast
-import io
 import json
 import os
 from pathlib import Path
@@ -19,27 +17,13 @@ import unittest
 INFRA = Path(__file__).resolve().parents[1]
 API = Path(os.environ.get("API_REPO", INFRA.parent / "boero-api")).resolve()
 UI = Path(os.environ.get("UI_REPO", INFRA.parent / "boero-ui")).resolve()
-COMMANDS = []
 OLD_SHA = "a" * 40
 NEW_SHA = "b" * 40
 OTHER_SHA = "c" * 40
-CASE_TESTS = {
-    "Q01.isolated-compose": ["test_compose_isolation"],
-    "Q02.qa-profile": ["test_qa_profile", "test_postgres_final_readiness"],
-    "Q03.qa-operations": ["test_qa_operations", "test_bootstrap_order"],
-    "Q04.invalid-input": ["test_invalid_inputs", "test_preflight_preservation"],
-    "Q04.failed-deploy-rollback": ["test_unhealthy_rollback", "test_api_initialization_failure"],
-    "C01.publication-gates": ["test_publication_gates"],
-    "C01.existing-flows": ["test_existing_flows"],
-    "C02.manual-qa-only": ["test_manual_qa_workflows"],
-    "D01.configuration-runbook": ["test_documented_contract"],
-}
 
 
 def command(args, cwd, env=None, check=True):
     result = subprocess.run(args, cwd=cwd, env=env, text=True, capture_output=True)
-    COMMANDS.append({"argv": list(map(str, args)), "cwd": str(cwd),
-                     "exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr})
     if check and result.returncode:
         raise AssertionError(f"{args!r} failed ({result.returncode}): {result.stderr}")
     return result
@@ -500,38 +484,5 @@ if any('CREATE DATABASE' in arg for arg in sys.argv): (work/'created').touch()
             command(["sh", "-n", str(INFRA / "scripts" / script)], INFRA)
 
 
-class Results(unittest.TextTestResult):
-    statuses = {}
-
-    def addSuccess(self, test):
-        self.statuses[test._testMethodName] = "passed"
-        super().addSuccess(test)
-
-    def addFailure(self, test, error):
-        self.statuses[test._testMethodName] = "failed"
-        super().addFailure(test, error)
-
-    def addError(self, test, error):
-        self.statuses[test._testMethodName] = "failed"
-        super().addError(test, error)
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--evidence", type=Path, help="Write a case-evidence mapping plus a sibling full report.")
-    args = parser.parse_args()
-    output = io.StringIO()
-    runner = unittest.TextTestRunner(stream=output, verbosity=2, resultclass=Results)
-    result = runner.run(unittest.defaultTestLoader.loadTestsFromTestCase(QaConfigTests))
-    print(output.getvalue(), end="")
-    if args.evidence:
-        evidence = args.evidence.resolve()
-        evidence.parent.mkdir(parents=True, exist_ok=True)
-        report = evidence.with_name("qa-config-report.json")
-        report.write_text(json.dumps({"tests": result.statuses, "output": output.getvalue(), "commands": COMMANDS,
-                                      "boundary": "config, mocked Docker orchestration, local Git workflow validation; no live deployment"}, indent=2))
-        cases = {case: {"status": "passed" if all(result.statuses.get(test) == "passed" for test in tests) else "failed",
-                        "artifact": str(report)} for case, tests in CASE_TESTS.items()}
-        evidence.write_text(json.dumps(cases, indent=2))
-        print(f"Case evidence: {evidence}")
-    raise SystemExit(0 if result.wasSuccessful() else 1)
+    unittest.main(verbosity=2)

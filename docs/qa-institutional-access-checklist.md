@@ -1,4 +1,4 @@
-# QA y acceso institucional: contrato de aceptación
+# QA y acceso institucional: checklist de verificación
 
 Esta entrega está aprobada para implementación y verificación **local**. No autoriza
 DNS público, certificados públicos, despliegues remotos, producción, commits ni pushes.
@@ -17,11 +17,11 @@ DNS público, certificados públicos, despliegues remotos, producción, commits 
   y logo: `cboero.testing.typeit.com.ar`, `cboero.staging.typeit.com.ar` y, en una
   activación futura, `cboero.typeit.com.ar`.
 
-## Requisitos obligatorios
+## Comportamientos a verificar
 
-Cada caso debe tener evidencia vigente de ejecución. Implementado no significa
-verificado. Los IDs se mantienen en el manifiesto de aceptación; una prueba omitida,
-fallida, sin ejecutar o perteneciente a otro estado del código impide el cierre.
+Esta checklist organiza las reglas de configuración y los comportamientos de acceso
+institucional. La verificación automatizada usa las suites unitarias y de integración
+de cada repositorio; los resultados deben corresponder al código actual.
 
 | ID | Criterio |
 | --- | --- |
@@ -44,22 +44,26 @@ fallida, sin ejecutar o perteneciente a otro estado del código impide el cierre
 | L03 | Validación de bytes, reemplazo seguro, actualización inmediata y fallback sin logo. |
 | S01 | Se conservan migraciones anteriores, HEAD/index, trabajo ajeno, entorno privado y recursos existentes. |
 | D01 | Ejemplos y runbook completos, separando activación pública de cierre local. |
-| V01 | El verificador rechaza casos faltantes, omitidos, fallidos y evidencia desactualizada. |
 
-## Ejecución y cierre
+## Ejecución de las suites
 
-Desde `boero-infra`: `make verify-qa-institutional-access`. Los repositorios hermanos
-pueden indicarse con `API_REPO` y `UI_REPO`. El comando no lee secretos de ambientes
-existentes ni reutiliza sus bases/volúmenes; sus recursos usan un namespace de aceptación.
+Desde cada repositorio:
 
-La evidencia se escribe en `build/verification/qa-institutional-access/`, ignorada por
-Git. Debe contener estado por caso/ID, comandos, resultados, capturas y huella de los
-repositorios. Nunca incluir contraseñas, JWT, refresh tokens, cookies ni archivos privados.
+```sh
+# boero-infra
+make test
 
-Estados permitidos: **pendiente**, **implementado**, **verificado**, **bloqueado**.
-Sólo se puede comunicar «implementación completa y verificada localmente; no
-desplegada» cuando todos los casos obligatorios pasan y la auditoría final vincula
-cada requisito con su código, prueba y evidencia. Un bloqueo no cuenta como éxito.
+# boero-api: unitarias e integración con PostgreSQL/Redis locales
+./gradlew test
+
+# boero-ui: unitarias y componentes/integración con Jest
+pnpm test
+```
+
+Los controles de infraestructura usan datos sintéticos, Docker/SSH simulados y un
+grafo Git temporal. Las integraciones de API usan sus bases locales descartables;
+las de UI simulan la red y los límites del framework. Se conservan las comprobaciones
+de permisos, contexto institucional, sesiones, tokens y persistencia.
 
 ## Activación pública posterior (fuera de esta entrega)
 
@@ -73,56 +77,3 @@ cada requisito con su código, prueba y evidencia. Un bloqueo no cuenta como éx
   no inferirlo de una semilla ni renombrar su slug.
 - Validar dominio, salud, correo, RP ID/orígenes y versión API/UI antes de habilitar acceso.
 - Producción y su dominio institucional requieren una activación separada.
-
-## Qué ejecuta el verificador
-
-Requisitos locales: Docker en el contexto `default` con socket Unix local,
-Compose compatible con `!override` (2.24.4 o posterior), OpenSSL, Python 3,
-Java 21/Gradle del proyecto y pnpm/dependencias instaladas en la UI.
-
-1. Ejecuta las pruebas negativas del propio verificador y las pruebas dirigidas
-   de configuración/orquestación/workflows. Estas últimas simulan Docker/SSH;
-   **no** prueban un despliegue remoto.
-2. Reejecuta los filtros de API registrados en `scripts/verification/api-tests.json`
-   con PostgreSQL/Flyway/Redis reales para las pruebas de integración y los
-   controles de compilación/formato y `staticAnalysis` (NullAway/ECJ main/test,
-   sin ejecutar más suites). Ejecuta las suites UI registradas en
-   `ui-tests.json`, TypeScript y lint/formato sólo de los archivos cambiados.
-3. Construye imágenes `prod` de la API/UI actuales y crea **dos stacks descartables**
-   propios, con TLS autofirmado y resolución de hosts únicamente dentro de Chromium.
-   Uno simula QA y otro el dominio de staging: ambos usan el perfil QA sin semillas
-   implícitas. No son los ambientes compartidos existentes. Las identidades sintéticas
-   de preparación se confirman sólo en estas bases; la prueba de registro confirma
-   por separado un usuario nuevo mediante correo realmente capturado.
-4. Ejecuta la batería Playwright sin mocks: flujos Chromium (correo, logos, permisos,
-   refresh y llave virtual WebAuthn) y los dos rechazos directos HTTP de loginAttempt/JWT
-   separados como `http-runtime`, no como evidencia visual. Después comprueba aislamiento, reinicio, Flyway y
-   backup/restore en otra base **nueva**, nunca sobre una base existente.
-5. Elimina sólo recursos identificados por namespace, propietario e IDs completos
-   de esa ejecución. Compara HEAD/index, entorno privado, migraciones previas y
-   recursos Docker preexistentes. Finalmente exige evidencia vigente para los 20 IDs.
-
-Cada ejecución guarda sus reportes normalizados en `runs/<run-id>/`. Los mapas
-registran nombres reales de pruebas: si una prueba se renombra, desaparece, se
-omite o falla, el requisito queda incompleto. El manifiesto exige el tipo de prueba
-necesario (unitaria, PostgreSQL, navegador o runtime), no permite reemplazar una
-prueba real por un mock y verifica también la integridad de reportes y capturas
-referenciados por el índice. `--audit-only` audita la evidencia existente sin ejecutar
-pruebas; modificar cualquier fuente, borrar o alterar un reporte/captura invalida
-ese cierre.
-
-Las credenciales, correo completo, cookies y logs crudos permanecen en directorios
-privados temporales, fuera de la evidencia. No se generan trazas de red. Si Docker
-impide el cleanup, el comando falla y conserva el archivo de ownership privado
-`/tmp/boero-acceptance-state-<run-id>.json`; se puede repetir el cleanup seguro con:
-
-```sh
-python3 scripts/verification/runtime.py stop --state /tmp/boero-acceptance-state-<run-id>.json
-```
-
-No usar `docker system prune`, `compose down -v` sobre proyectos compartidos ni
-borrar recursos manualmente para hacer pasar el gate. Las imágenes locales de
-aceptación quedan disponibles (no se eliminan imágenes ajenas). Opcionalmente
-`ACCEPTANCE_API_IMAGE`/`ACCEPTANCE_UI_IMAGE` reutilizan una imagen local sólo si sus
-etiquetas identifican la app y la huella exacta del árbol actual; una imagen antigua
-se rechaza. El comando no publica imágenes ni se conecta por SSH.

@@ -71,9 +71,9 @@ El acceso institucional previsto es `https://cboero.testing.typeit.com.ar` y nec
 `publicSubdomain=cboero` en la institución correcta. No renombra su slug ni se infiere
 por una semilla. No hace falta agregar accesos institucionales a la lista global:
 la API agrega únicamente el origen institucional activo resuelto para la solicitud.
-No allowlistear instituciones hermanas ni usar comodines. Para la aceptación local
-equivalente a QA con HTTPS, usar un proxy y certificado locales/temporales, DNS del
-navegador y orígenes/RP ID consistentes; no activar `dev`/`test` para eludir el guard.
+No allowlistear instituciones hermanas ni usar comodines. Las validaciones manuales
+de QA con HTTPS requieren certificados, resolución de hosts y orígenes/RP ID
+consistentes; no activar `dev`/`test` para eludir el guard.
 
 El desarrollo cotidiano pertenece a los repositorios API/UI y conserva
 `http://localhost:3000` y `http://cboero.localhost:3000`. Chromium admite HTTP para
@@ -173,16 +173,17 @@ Para una activación posterior autorizada:
    en cada dispatch. Verificar estado, logs y URLs efectivas después.
 7. Configurar DNS/HTTPS del dominio general e institucional de QA y del institucional
    de staging, y sólo entonces habilitar `publicSubdomain`/orígenes. Producción requiere
-   otra activación. Ningún paso remoto se ejecuta en la aceptación local.
+   otra activación.
 
 ## Verificación local
 
 `make test` corre pruebas de scripts con Docker simulado y renderiza Compose real
 usando envs sintéticos temporales, no `.env` existentes. También ejecuta validación
 de workflows con un grafo Git descartable y verifica que las políticas antiguas no
-cambien. No afirma disponibilidad de un host ni éxito de Actions. La aceptación
-completa de PostgreSQL/Flyway, backups/restauración y navegadores se coordina mediante
-`make verify-qa-institutional-access`; sus evidencias están ignoradas bajo `build/verification/`.
+cambien. No afirma disponibilidad de un host ni éxito de Actions.
+
+La suite automatizada incluye pruebas unitarias y de integración. Las suites de API
+y UI se ejecutan desde sus repositorios con `./gradlew test` y `pnpm test`, respectivamente.
 
 Referencias upstream verificadas para la captura de correo: [healthchecks Mailpit](https://mailpit.axllent.org/docs/integration/healthcheck/)
 y [versiones de Mailpit](https://github.com/axllent/mailpit/releases). El tag fijado

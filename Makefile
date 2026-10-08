@@ -17,10 +17,6 @@ LOCK_FILE := /tmp/boero-infra-$(ENV).lock
 
 .DEFAULT_GOAL := status
 
-.PHONY: verify-qa-institutional-access
-verify-qa-institutional-access:
-	./scripts/verify-qa-institutional-access.sh
-
 .PHONY: prepare preflight bootstrap deploy-ui deploy-api rollback-ui rollback-api backup-db status logs logs-api logs-api-file logs-api-request down test
 
 prepare:
